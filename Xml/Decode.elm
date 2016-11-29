@@ -10,6 +10,7 @@ import Json.Encode exposing (string, object, list, array)
 import Xml.Parser exposing (XmlAst(..))
 --import List.Extra as List
 import Array
+import Tuple
 
 
 takeWhile : (a -> Bool) -> List a -> List a
@@ -33,8 +34,8 @@ span p xs = (takeWhile p xs, dropWhile p xs)
 
 
 groupBy : (a -> a -> Bool) -> List a -> List (List a)
-groupBy eq xs' =
-  case xs' of
+groupBy eq xs_ =
+  case xs_ of
     [] -> []
     (x::xs) -> let (ys,zs) = span (eq x) xs
                in (x::ys)::groupBy eq zs
@@ -44,20 +45,20 @@ getElementsOrArray : List XmlAst -> List ( String, Json.Encode.Value )
 getElementsOrArray elems =
   let
     -- partition the list by determining if a given key exists more than one time -> array
-    ( array', elems' ) =
+    ( array_, elems_ ) =
       elems
-        |> List.map toJson'
-        |> groupBy (\a b -> fst a == fst b)
+        |> List.map toJson_
+        |> groupBy (\a b -> Tuple.first a == Tuple.first b)
         |> List.partition (\ls -> List.length ls > 1)
 
     -- flatten the "normal" elements
-    elems'' =
-      elems'
+    elems__ =
+      elems_
         |> List.concatMap identity
 
     -- create the array elements
-    array'' =
-      array'
+    array__ =
+      array_
         |> List.map
             (\ls ->
               let
@@ -66,7 +67,7 @@ getElementsOrArray elems =
                     |>
                       List.head
                     |>
-                      Maybe.map fst
+                      Maybe.map Tuple.first
                     -- cannot happen, there is always at least one element
                     -- in the list by the nature of how groupBy works
                     |>
@@ -74,13 +75,13 @@ getElementsOrArray elems =
               in
                 ( name
                 , ls
-                    |> List.map snd
+                    |> List.map Tuple.second
                     |> Array.fromList
                     |> array
                 )
             )
   in
-    elems'' ++ array''
+    elems__ ++ array__
 
 
 getAttributes : List ( String, String ) -> List ( String, Json.Encode.Value )
@@ -89,8 +90,8 @@ getAttributes attrs =
     |> List.map (\( n, v ) -> ( "__" ++ n, string v ))
 
 
-toJson' : XmlAst -> ( String, Json.Encode.Value )
-toJson' xmlAst =
+toJson_ : XmlAst -> ( String, Json.Encode.Value )
+toJson_ xmlAst =
   case xmlAst of
     Body txt ->
       ( "__text", string txt )
@@ -112,5 +113,5 @@ toJson' xmlAst =
 toJson : List XmlAst -> Json.Encode.Value
 toJson xmlAst =
   xmlAst
-    |> List.map toJson'
+    |> List.map toJson_
     |> object
