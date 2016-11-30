@@ -6,8 +6,8 @@ which can be further transformed.
 @docs XmlAst, parseXml
 -}
 
-import Combine exposing (..)
-import Combine.Char exposing (..)
+import Combine exposing (Parser, ParseErr, ParseOk, andThen, between, choice, end, lazy, many, many1, manyTill, maybe, parse, succeed, string, (<|>), (<?>), (<$), (<$>), (<*), (*>), (<*>))
+import Combine.Char exposing (anyChar, char, digit, lower, newline, noneOf, space, tab, upper)
 import String
 import Result exposing (Result(..))
 
