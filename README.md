@@ -1,0 +1,1 @@
+This library is based on the xml parser created at [toburger/elm-xml-parser](https://github.com/toburger/elm-xml-parser).
