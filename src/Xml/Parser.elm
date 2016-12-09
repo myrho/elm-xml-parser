@@ -39,7 +39,7 @@ type XmlAst
 
 spaces : Parser () (List Char)
 spaces =
-    many (space <|> newline <|> tab)
+    many (space  <|> tab <|> char '\r' <|> newline)
 
 
 letter : Parser () Char
