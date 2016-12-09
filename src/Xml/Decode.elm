@@ -116,6 +116,9 @@ toJson_ xmlAst =
         Comment comment ->
             ( "__comment", string comment )
 
+        ProcessingInstruction name content attrs ->
+            ( "__pi", string name)
+
         CDATA cdata ->
             ( "__cdata", string cdata )
 

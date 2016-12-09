@@ -8,7 +8,7 @@ import Xml.Parser exposing (parseXml, XmlAst(..))
 {- Run all tests. The `test` function is defined at the end of this file. -}
 all : Test
 all =
-    describe "Xml.Parser" [ prolog, names, elements ]
+    describe "Xml.Parser" [ prolog, names, elements, processingInstructions ]
 
 
 {-| Empty document
@@ -20,7 +20,6 @@ empty =
             [ "", "" ]
             (Ok [])
         ]
-
 
 
 {- PROLOG
@@ -49,7 +48,8 @@ prolog =
         ]
 
 
-{-| NAMES Names for tags and attributes have the same rules.
+{-| NAMES  
+Names for tags and attributes have the same rules.
 
 [4] NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] |
     [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] |
@@ -98,10 +98,10 @@ names =
                     (\n ->
                         [ test "Element"
                             [ "<" ++ n, "/>" ]
-                            (Err [ "Invalid Tag name", "Invalid Tag name", "expected \"<!--\"" ])
+                            (Err [ "Invalid Tag name", "Invalid Tag name", "expected \"<!--\"", "expected \"<?\"" ])
                         , test "Attribute"
                             [ "<a ", n, "=\"\"/>" ]
-                            (Err [ "expected '>'", "expected \"/>\"", "expected \"<!--\"" ])
+                            (Err ["expected '>'","expected \"/>\"","expected \"<!--\"","expected \"<?\""])
                         ]
                     )
                     invalidNames
@@ -162,6 +162,22 @@ elements =
                     ]
                 )
             ]
+        ]
+
+
+processingInstructions : Test
+processingInstructions =
+    describe "Processing instructions"
+        [ test "Without attributes"
+            [ "<?a b c", "?>" ]
+            (Ok
+                [ ProcessingInstruction "a" "b c" [] ]
+            ) 
+        , test "With attributes"
+            [ "<?a b='1' c='2'", "?>" ]
+            (Ok
+                [ ProcessingInstruction "a" "b='1' c='2'" [("b", "1"), ("c", "2")] ]
+            ) 
         ]
 
 

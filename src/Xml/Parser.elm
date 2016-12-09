@@ -35,11 +35,15 @@ type XmlAst
     | Body String
     | Comment String
     | CDATA String
-
+    {- The content of a processing instruction can be any text; it doesn't have
+    to be well-formed attributes. Therefore the string content of the PI is
+    always given, and a list of attributes if they are found, as a convenience.
+    -}
+    | ProcessingInstruction Name String (List Attribute)
 
 spaces : Parser () (List Char)
 spaces =
-    many (space  <|> tab <|> char '\r' <|> newline)
+    many (space <|> tab <|> char '\r' <|> newline)
 
 
 letter : Parser () Char
@@ -132,6 +136,23 @@ xmlDeclaration =
     () <$ (string "<?xml" *> Combine.while ((/=) '?') <* string "?>")
 
 
+processingInstruction : Parser () XmlAst
+processingInstruction =
+    (\name contentChars ->
+        let
+            content =
+                contentChars |> String.fromList |> String.trim
+            attribs =
+                case parse (many keyValue) content of
+                    Ok (_, _, list) -> list
+                    Err _ -> []
+        in
+            ProcessingInstruction name content attribs
+    )
+        <$> (string "<?" *> name <* spaces)
+        <*> (manyTill anyChar (string "?>"))
+
+
 xmlParser : Parser () XmlAst
 xmlParser =
     lazy (\() -> withExplicitCloseTag) <|> lazy (\() -> withoutExplicitCloseTag)
@@ -139,12 +160,12 @@ xmlParser =
 
 rootElements : Parser () (List XmlAst)
 rootElements =
-    many1 (choice [ xmlParser, comment <* spaces ])
+    many1 (choice [ xmlParser, comment <* spaces, processingInstruction <* spaces ])
 
 
 innerXml : Parser () XmlAst
 innerXml =
-    comment <|> cdata <|> xmlParser <|> parseBody
+    comment <|> processingInstruction <|> cdata <|> xmlParser <|> parseBody
 
 
 parser : Parser () (List XmlAst)
