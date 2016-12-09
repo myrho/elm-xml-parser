@@ -71,31 +71,22 @@ quotedString =
     betweenSingleQuotes <|> betweenDoubleQuotes
 
 
-attributeName : Parser () String
-attributeName =
-    String.fromList
-        <$> many1 (letter <|> digit <|> char '-' <|> char ':')
-        <?> "Invalid Attribute name"
-
-
-tagName : Parser () String
-tagName =
-    String.fromList
-        <$> many (choice [ letter, digit, char '_', char ':' ])
-        <?> "Invalid Tag name"
+name : Parser () String
+name =
+    Combine.regex "[:A-Z_a-z][\\w:\\-.]*"
 
 
 keyValue : Parser () ( String, String )
 keyValue =
     (\key value -> ( key, value ))
-        <$> (attributeName <* spaces <* char '=' <* spaces)
+        <$> ((name <?> "Invalid Attribute name") <* spaces <* char '=' <* spaces)
         <*> (quotedString <* spaces)
 
 
 openTag : Parser () ( String, List ( String, String ) )
 openTag =
-    (\name attribs -> ( name, attribs ))
-        <$> (char '<' *> tagName)
+    (\tagName attribs -> ( tagName, attribs ))
+        <$> (char '<' *> (name <?> "Invalid Tag name"))
         <*> (spaces *> many keyValue <* char '>')
 
 
@@ -126,8 +117,8 @@ cdata =
 
 withoutExplicitCloseTag : Parser () XmlAst
 withoutExplicitCloseTag =
-    (\name attribs -> Element name attribs [])
-        <$> ((char '<' *> tagName <* spaces))
+    (\tagName attribs -> Element tagName attribs [])
+        <$> ((char '<' *> (name <?> "Invalid Tag name") <* spaces))
         <*> (many keyValue <* string "/>")
 
 
