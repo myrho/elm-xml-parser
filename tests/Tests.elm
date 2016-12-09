@@ -105,7 +105,7 @@ test name parts expected =
     let
         inputList =
             -- S ::= (#x20 | #x9 | #xD | #xA)+
-            [ "", " ", "  ", "\t",  "\n" ]
+            [ "", " ", "  ", "\t", "\r", "\n" ]
                 |> List.map (\s -> String.join s parts)
     in
         inputList
