@@ -1,0 +1,1 @@
+This folder will be removed once satifactory tests have been added in the /tests folder.
